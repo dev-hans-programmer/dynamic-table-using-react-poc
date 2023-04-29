@@ -14,11 +14,14 @@ export default function App() {
 
   const [isAddingHead, setIsAddingHead] = useState(false);
   const [isRowAdding, setIsRowAdding] = useState(false);
+  const [isRowEditing, setIsRowEditing] = useState(false);
+  const [editingRow, setEditingRow] = useState(null);
 
   const [rows, setRows] = useState([
     {
       username: 'Hasan',
       password: 1223,
+      id: Math.trunc(Math.random() * 1000),
     },
   ]);
 
@@ -43,6 +46,7 @@ export default function App() {
     setNewRow((prev) => ({
       ...prev,
       [name]: value,
+      id: Math.trunc(Math.random() * 1000),
     }));
   }
 
@@ -71,17 +75,45 @@ export default function App() {
     setHeader(headerStatic);
   }
 
+  function handleEdit(row) {
+    console.log('row', row);
+    setEditingRow(row);
+    setIsRowEditing(true);
+  }
+
   function onSaveRow() {
     setRows((prev) => [...prev, newRow]);
     setIsRowAdding(false);
     setNewRow(getNewRowObject());
   }
 
+  function onEditChange(e) {
+    const { name, value } = e.target;
+    setEditingRow((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
+  console.log('EDITING ROW', editingRow);
+
+  function onUpdate() {
+    // update the existing row based on the editied value
+    setRows((prev) =>
+      prev.map((item) =>
+        item.id === editingRow.id ? { ...item, ...editingRow } : item
+      )
+    );
+
+    setIsRowEditing(false);
+    // turn off editing flag
+  }
+
   return (
     <main>
       <div className="button-container">
         <button onClick={handleAddHeader}>Add head</button>
-        <button onClick={handleAddValue}>Add value</button>
+        <button onClick={handleAddValue} disabled={isRowAdding}>Add value</button>
 
         {isAddingHead && (
           <>
@@ -105,9 +137,30 @@ export default function App() {
         <tbody>
           {rows.map((row) => (
             <tr>
-              {headers.map((header) => (
-                <td>{row[header.title]} </td>
-              ))}
+              {headers.map((header) =>
+                //
+                isRowEditing && row.id === editingRow.id ? (
+                  <>
+                    <td>
+                      <input
+                        value={editingRow[header.title]}
+                        name={header.title}
+                        onChange={onEditChange}
+                      />
+                    </td>
+                  </>
+                ) : (
+                  <td>{row[header.title]} </td>
+                )
+              )}
+
+              <td>
+                <button
+                  onClick={isRowEditing && row.id === editingRow.id ? onUpdate : () => handleEdit(row)}
+                >
+                  {isRowEditing && row.id === editingRow.id? 'Update' : 'Edit'}{' '}
+                </button>{' '}
+              </td>
             </tr>
           ))}
           {isRowAdding && (
